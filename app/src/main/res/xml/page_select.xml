@@ -11,6 +11,6 @@
         android:key="@string/pagekey"
         android:inputType="number"
         android:singleLine="true"
-        android:title="Select Page" />
+        android:title="Enter Page No" />
 
 </PreferenceScreen>

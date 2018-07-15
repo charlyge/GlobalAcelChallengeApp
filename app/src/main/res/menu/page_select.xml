@@ -9,7 +9,7 @@
         />
     <item
         android:id="@+id/pageno"
-        android:title="Change PageNo"
+        android:title="Select Page"
         android:orderInCategory="100"
         app:showAsAction="always" />
 </menu>
