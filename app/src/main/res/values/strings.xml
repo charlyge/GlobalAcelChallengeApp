@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GlobalAcelChallengeApp</string>
+    <string name="app_name">GlobalAcel</string>
     <string name="name">Name</string>
     <string name="age">Age</string>
     <string name="description">Description</string>
@@ -8,7 +8,10 @@
     <string name="profile">Profile</string>
     <string name="save_entry">Save Entry</string>
     <string name="an_error_occurred">An error occurred</string>
-    <string name="no_data_found">No data Found</string>
-    <string name="refresh">refresh</string>
+    <string name="search">search</string>
     <string name="an_error_occurred_enable_internet_and_retry">An error occurred enable Internet and Retry</string>
+    <string name="enter_page_no_and_prees_search">Enter Page No and Prees Search</string>
+    <string name="pagekey">pageNo</string>
+    <string name="page_default">1</string>
+    <string name="no_data">OOps!! No Data Found For This Page</string>
 </resources>

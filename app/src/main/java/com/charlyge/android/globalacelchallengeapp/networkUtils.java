@@ -1,5 +1,7 @@
 package com.charlyge.android.globalacelchallengeapp;
 
+import android.net.Uri;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,6 +9,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -17,11 +20,25 @@ import java.util.Scanner;
 
 
 public class networkUtils {
+    final static String BASE_URL = "https://intern-challenge.herokuapp.com/persons";
 
-    public static String makeHttpUrlConnection(String url) throws IOException {
 
-        URL nUrl = new URL(url);
-        HttpURLConnection urlConnection = (HttpURLConnection) nUrl.openConnection();
+    final static String QUERY = "page";
+
+    public static URL buildUrl(String SearchQuery){
+        Uri uri = Uri.parse(BASE_URL).buildUpon().appendQueryParameter(QUERY,SearchQuery).build();
+        URL url=null;
+        try {
+            url = new URL(uri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return url;
+    }
+
+    public static String makeHttpUrlConnection(URL url) throws IOException {
+
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         urlConnection.setReadTimeout(30000 /* milliseconds */);
         urlConnection.setConnectTimeout(30000 /* milliseconds */);
         try {
