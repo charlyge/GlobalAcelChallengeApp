@@ -46,7 +46,11 @@ public class DetailsActivity extends AppCompatActivity {
     private void getIntentExtras() {
         if(intent.hasExtra(PHOTO)){
             String photoUrl=  intent.getStringExtra(PHOTO);
-            Picasso.get().load(photoUrl).into(imageView);
+            if (photoUrl.isEmpty()) {
+                imageView.setImageResource(R.mipmap.ic_launcher);
+            } else{
+                Picasso.get().load(photoUrl).into(imageView);
+            }
 
 
         }

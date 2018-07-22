@@ -45,8 +45,17 @@ public class MainActivity extends AppCompatActivity implements
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        initViews();
+        errorTextView = (TextView) findViewById(R.id.error_view);
+        progressBar = (ProgressBar) findViewById(R.id.loading_indicator);
+        recyclerView = (RecyclerView)findViewById(R.id.recycler);
+        recyclerView.setHasFixedSize(true);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new personsAdapter(MainActivity.this,this);
+        recyclerView.setAdapter(adapter);
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
+      loadJSON();
 
 
     }
@@ -62,27 +71,25 @@ public class MainActivity extends AppCompatActivity implements
         int id = item.getItemId();
 
         if (id == R.id.refresh) {
-            resetData();
-           loadJSON();
-            return true;
+            MainActivity.this.recreate();
+
+return true;
         }
 
-        if (id == R.id.pageno) {
+        if (id==R.id.pageno){
             Intent intent = new Intent(this, PageNoActivity.class);
             startActivity(intent);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
-    }
+}
 
-    private void resetData() {
-        adapter.setWeatherData(null);
-    }
+
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        PREFERENCE_UPDATED = true;
+        PREFERENCE_UPDATED =true;
     }
 
     @Override
@@ -116,10 +123,10 @@ public class MainActivity extends AppCompatActivity implements
             NetworkService.getInstance().getApi().personList(pref).enqueue(new Callback<Actualpersons>() {
                 @Override
                 public void onResponse(Call<Actualpersons> call, Response<Actualpersons> response) {
-                    if (response.body() != null) {
+                    if(response.body()!=null){
                         Log.i("ResponseBody", response.body().toString());
                         adapter.setWeatherData(response.body());
-                        Log.i("MAINACTIVITY", "sucess" + response.body());
+                        Log.i("MAINACTIVITY","sucess" + response.body());
                         progressBar.setVisibility(View.INVISIBLE);
                     }
 
@@ -127,10 +134,15 @@ public class MainActivity extends AppCompatActivity implements
 
                 @Override
                 public void onFailure(Call<Actualpersons> call, Throwable t) {
-                    Log.i("MAINACTIVITY", "fail " + t.getMessage());
+                    Log.i("MAINACTIVITY","fail " + t.getMessage());
                 }
             });
-        } else {
+        }
+
+
+
+
+        else{
 
             progressBar.setVisibility(View.INVISIBLE);
             errorTextView.setVisibility(View.VISIBLE);
@@ -138,17 +150,17 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    private void initViews() {
-        errorTextView = (TextView) findViewById(R.id.error_view);
-        progressBar = (ProgressBar) findViewById(R.id.loading_indicator);
-        recyclerView = (RecyclerView) findViewById(R.id.recycler);
-        recyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
-        adapter = new personsAdapter(MainActivity.this, this);
-        recyclerView.setAdapter(adapter);
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
-        loadJSON();
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+
+        if (PREFERENCE_UPDATED) {
+            Log.d("main", "onStart: preferences were updated");
+      MainActivity.this.recreate();
+            PREFERENCE_UPDATED = false;
+        }
     }
+
+
 }

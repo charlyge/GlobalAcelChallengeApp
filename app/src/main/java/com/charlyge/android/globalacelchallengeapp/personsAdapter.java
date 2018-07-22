@@ -57,7 +57,13 @@ public class personsAdapter extends RecyclerView.Adapter<personsAdapter.personVi
         final String description = newpersons.getDescription();
         final String id = newpersons.getId();
         holder.nameTextView.setText(name);
-        Picasso.get().load(photo).into(holder.imageView);
+        if (photo.isEmpty()) {
+            holder.imageView.setImageResource(R.mipmap.ic_launcher);
+        } else{
+            Picasso.get().load(photo).into(holder.imageView);
+        }
+
+
 
 
 
