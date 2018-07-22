@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+
 import com.squareup.picasso.Picasso;
 
 import static com.charlyge.android.globalacelchallengeapp.EditActivity.DESEXTRA;
@@ -39,9 +40,14 @@ public class DetailsActivity extends AppCompatActivity {
         imageView = (ImageView)findViewById(R.id.imageView_details);
         editImageView = (ImageView)findViewById(R.id.edit_iv);
         imageEditClickListener();
+        getIntentExtras();
+    }
+
+    private void getIntentExtras() {
         if(intent.hasExtra(PHOTO)){
             String photoUrl=  intent.getStringExtra(PHOTO);
-            Picasso.get().load(photoUrl).placeholder(R.mipmap.ic_launcher).into(imageView);
+            Picasso.get().load(photoUrl).into(imageView);
+
 
         }
         if(intent.hasExtra(Intent.EXTRA_TEXT)){
@@ -66,6 +72,7 @@ public class DetailsActivity extends AppCompatActivity {
 
         }
     }
+
     private void imageEditClickListener(){
         editImageView.setOnClickListener(new View.OnClickListener() {
             @Override

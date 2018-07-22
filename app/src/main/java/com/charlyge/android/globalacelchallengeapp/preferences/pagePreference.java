@@ -1,8 +1,10 @@
-package com.charlyge.android.globalacelchallengeapp;
+package com.charlyge.android.globalacelchallengeapp.preferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.v7.preference.PreferenceManager;
+
+import com.charlyge.android.globalacelchallengeapp.R;
 
 /**
  * Created by DELL PC on 7/14/2018.

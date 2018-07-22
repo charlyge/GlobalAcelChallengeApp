@@ -5,16 +5,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,21 +18,25 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
+import com.charlyge.android.globalacelchallengeapp.Model.Actualpersons;
+import com.charlyge.android.globalacelchallengeapp.Retrofit.NetworkService;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<ArrayList<persons>>,
-        SharedPreferences.OnSharedPreferenceChangeListener{
+import static com.charlyge.android.globalacelchallengeapp.DetailsActivity.AGE;
+import static com.charlyge.android.globalacelchallengeapp.DetailsActivity.DESCRIPTION;
+import static com.charlyge.android.globalacelchallengeapp.DetailsActivity.ID;
+import static com.charlyge.android.globalacelchallengeapp.DetailsActivity.PHOTO;
+import static com.charlyge.android.globalacelchallengeapp.preferences.pagePreference.changePageNo;
+
+public class MainActivity extends AppCompatActivity implements
+        SharedPreferences.OnSharedPreferenceChangeListener, personsAdapter.personsAdapterItemClickListener {
     RecyclerView recyclerView;
     personsAdapter adapter;
     private ProgressBar progressBar;
     private TextView errorTextView;
-    private static final int LOADER_ID = 1;
-    ArrayList<persons> arrayList = null;
-    String queryparam;
     private boolean PREFERENCE_UPDATED = false;
 
 
@@ -45,107 +45,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        recyclerView = (RecyclerView) findViewById(R.id.recycler);
-        errorTextView = (TextView) findViewById(R.id.error_view);
-        progressBar = (ProgressBar) findViewById(R.id.loading_indicator);
 
-            LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-            adapter = new personsAdapter(this);
-            recyclerView.setHasFixedSize(true);
-            recyclerView.setLayoutManager(layoutManager);
-            recyclerView.setAdapter(adapter);
-
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
-
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
-        if (networkInfo != null) {
-
-            LoaderManager loaderManager = getSupportLoaderManager();
-            loaderManager.initLoader(LOADER_ID, null, this);
-
-        }
-        else{
-
-            progressBar.setVisibility(View.INVISIBLE);
-            errorTextView.setVisibility(View.VISIBLE);
-        }
+        initViews();
 
 
     }
-
-    @NonNull
-    @Override
-    public Loader<ArrayList<persons>> onCreateLoader(int id, @Nullable final Bundle args) {
-        return new AsyncTaskLoader<ArrayList<persons>>(this) {
-
-            @Nullable
-            @Override
-            public ArrayList<persons> loadInBackground() {
-
-                queryparam = pagePreference.changePageNo(MainActivity.this);
-                URL url = networkUtils.buildUrl(queryparam);
-
-                try {
-                    String jsonData = networkUtils.makeHttpUrlConnection(url);
-                    arrayList = networkUtils.extractFeaturesFromJson(jsonData);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return null;
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    return null;
-                }
-                return arrayList;
-
-            }
-
-
-            @Override
-            protected void onStartLoading() {
-                if (arrayList != null) {
-                    deliverResult(arrayList);
-                } else {
-                    progressBar.setVisibility(View.VISIBLE);
-                    forceLoad();
-                }
-
-
-            }
-
-
-            @Override
-            public void deliverResult(@Nullable ArrayList<persons> data) {
-                arrayList = data;
-                super.deliverResult(data);
-            }
-        };
-    }
-
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<ArrayList<persons>> loader, ArrayList<persons> data) {
-        progressBar.setVisibility(View.GONE);
-        errorTextView.setVisibility(View.INVISIBLE);
-
-        if (data != null && !data.isEmpty()) {
-            adapter.setWeatherData(data);
-
-        } else {
-            errorTextView.setText(R.string.no_data);
-            errorTextView.setVisibility(View.VISIBLE);
-        }
-
-
-    }
-
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<ArrayList<persons>> loader) {
-
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -158,40 +62,27 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         int id = item.getItemId();
 
         if (id == R.id.refresh) {
-            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
-            if (networkInfo != null) {
-
-          resetData();
-                      progressBar.setVisibility(View.VISIBLE);
-                    getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
-
-            } else {
-                progressBar.setVisibility(View.INVISIBLE);
-                errorTextView.setText("An Error Occured Enable Internet Connection and Retry");
-                errorTextView.setVisibility(View.VISIBLE);
-                Toast.makeText(MainActivity.this, "Enable Internet Connection and Retry", Toast.LENGTH_LONG).show();
-            }
-
-return true;
+            resetData();
+           loadJSON();
+            return true;
         }
 
-        if (id==R.id.pageno){
+        if (id == R.id.pageno) {
             Intent intent = new Intent(this, PageNoActivity.class);
             startActivity(intent);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
-}
+    }
 
     private void resetData() {
-       adapter.setWeatherData(null);
+        adapter.setWeatherData(null);
     }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        PREFERENCE_UPDATED =true;
+        PREFERENCE_UPDATED = true;
     }
 
     @Override
@@ -203,14 +94,61 @@ return true;
                 .unregisterOnSharedPreferenceChangeListener(this);
     }
 
+
     @Override
-    protected void onStart() {
-        super.onStart();
+    public void onClick(String name, String description, String PhotoId, String age, String id) {
+        Intent intent = new Intent(MainActivity.this, DetailsActivity.class);
+        intent.putExtra(Intent.EXTRA_TEXT, name);
+        intent.putExtra(DESCRIPTION, description);
+        intent.putExtra(PHOTO, PhotoId);
+        intent.putExtra(ID, id);
+        intent.putExtra(AGE, age);
+        startActivity(intent);
+    }
 
-        if (PREFERENCE_UPDATED) {
 
-            getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
-            PREFERENCE_UPDATED = false;
+    private void loadJSON() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
+        if (networkInfo != null) {
+            String pref = changePageNo(this);
+
+            NetworkService.getInstance().getApi().personList(pref).enqueue(new Callback<Actualpersons>() {
+                @Override
+                public void onResponse(Call<Actualpersons> call, Response<Actualpersons> response) {
+                    if (response.body() != null) {
+                        Log.i("ResponseBody", response.body().toString());
+                        adapter.setWeatherData(response.body());
+                        Log.i("MAINACTIVITY", "sucess" + response.body());
+                        progressBar.setVisibility(View.INVISIBLE);
+                    }
+
+                }
+
+                @Override
+                public void onFailure(Call<Actualpersons> call, Throwable t) {
+                    Log.i("MAINACTIVITY", "fail " + t.getMessage());
+                }
+            });
+        } else {
+
+            progressBar.setVisibility(View.INVISIBLE);
+            errorTextView.setVisibility(View.VISIBLE);
         }
+
+    }
+
+    private void initViews() {
+        errorTextView = (TextView) findViewById(R.id.error_view);
+        progressBar = (ProgressBar) findViewById(R.id.loading_indicator);
+        recyclerView = (RecyclerView) findViewById(R.id.recycler);
+        recyclerView.setHasFixedSize(true);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new personsAdapter(MainActivity.this, this);
+        recyclerView.setAdapter(adapter);
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
+        loadJSON();
     }
 }
